@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "encode.h"
 #include "types.h"
 
@@ -320,6 +321,18 @@ Status encode_byte_to_lsb(char data, char *image_buffer)
 
         }
     */
+    for(int i=7;i >= 0;i--)
+    {
+        if(data &(1 << i))
+        {
+            image_buffer[7 - i] = image_buffer[7 - i] | 1;
+        }
+        else
+        {
+            image_buffer[7 - i] = image_buffer[7 - i] & ~1;
+        }
+    }
+    return e_success;
 
 }
 Status encode_secret_file_extn_size(EncodeInfo *encoInfo)
@@ -335,6 +348,23 @@ Status encode_secret_file_extn_size(EncodeInfo *encoInfo)
 
         return e_success;
     */
+    char *dot = strchr(encInfo->secret_fname,'.');
+
+    if(dot == NULL)
+    {
+        return e_failure;
+    }
+    strcpy(encInfo->extn_secret_file,dot);
+
+    char buff[32];
+
+    fread(buff, 32, 1, encInfo->fptr_src_image);
+
+    encode_size_to_lsb(strlen(encInfo->extn_secret_file),buff);
+
+    fwrite(buff, 32, 1, encInfo->fptr_stego_image);
+
+    return e_success;
 
 }
 Status encode_size_to_lsb(int size, char *Image_buff)
@@ -350,8 +380,19 @@ Status encode_size_to_lsb(int size, char *Image_buff)
         
         return e_success;
 
-
     */
+    for(int i = 31;i >=0;i--)
+    {
+        if((unsigned int)size &(1U <<i))
+        {
+            Image_buff[31 - i] = Image_buff[31 - i] | 1;
+        }
+        else
+        {
+            Image_buff[31 - i] = Image_buff[31 - i] & ~1;
+        }
+    }
+    return e_success;
 
 }
 Status encode_secret_file_extn(const char *file_extn, EncodeInfo *encInfo)
@@ -366,6 +407,15 @@ Status encode_secret_file_extn(const char *file_extn, EncodeInfo *encInfo)
         return e_success
 
     */
+    for(int i = 0; file_extn[i]!= '\0';i++)
+    {
+        fread(buff, 8, 1, encInfo->fptr_src_image);
+
+        encode_byte_to_lsb(file_extn[i], buff);
+
+        fwrite(buff, 8, 1, encInfo->fptr_stego_image);
+    }
+    return e_success;
 
 }
 Status encode_secret_file_size(long file_size, EncodeInfo *encInfo);
@@ -379,6 +429,15 @@ Status encode_secret_file_size(long file_size, EncodeInfo *encInfo);
 
         return e_success
     */
+    char buff[32];
+
+    fread(buff, 32, 1, encInfo->fptr_src_image);
+
+    encode_size_to_lsb(file_size, buff);
+
+    fwrite(buff, 32, 1, encInfo->fptr_stego_image);
+
+    return e_success;
 }
 
 Status encode_secret_file_data(EncodeInfo *encInfo)
@@ -392,6 +451,18 @@ Status encode_secret_file_data(EncodeInfo *encInfo)
 
         return e_success
     */
+    char buff[8];
+    char data;
+
+    while(fread(&data, 1, 1, encInfo->fptr_secret) == 1)
+    {
+        fread(buff, 8, 1, encInfo->fptr_src_image);
+
+        encode_byte_to_lsb(data, buff);
+
+        fwrite(buff, 8, 1, encInfo->fptr_stego_image);
+    }
+    return e_success;
 }
 Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
 {
@@ -403,4 +474,11 @@ Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
 
         return e_success
     */
+    char data;
+
+    while(fread(&data, 1, 1, fptr_src) == 1)
+    {
+        fwrite(&data, 1, 1, fptr_dest);
+    }
+    return e_success;s
 }
