@@ -95,6 +95,33 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
 
     return e_success
     */
+    if(argv[2] == NULL || strlen(argv[2]) < 4 || strcmp(argv[2] + strlen(argv[2]) - 4, ".bmp") != 0)
+    {
+        printf("ERROR: Source image should be  a .bmp file\n");
+        return e_failure;
+    }
+    encInfo->src_image_fname = argv[2];
+
+    encInfo->secret_fname = argv[3];
+
+    if(argv[4] == NULL)
+    {
+        encInfo->stego_image_fname = "Output.bmp";
+    }
+    else
+    {
+        if(strlen(argv[4] < 4 || strcmp(argv[4])+ strlen(argv[4]) - 4, ".bmp") != 0)
+        {
+            printf("ERROR: Output image should be a .bmp file\n");
+            return e_failure;
+        }
+        encInfo->stego_image_fname = argv[4];
+    }
+    if(open_files(encInfo) == e_failure)
+    {
+        return e_failure;
+    }
+    return e_success;
 }
 
 Status open_files(EncodeInfo *encInfo)
@@ -103,6 +130,7 @@ Status open_files(EncodeInfo *encInfo)
         -> open 'encoInfo -> src_image_fname' file in read mode
            * If ret value is NULL, print error, return e_failure
            fptr_src_image = fopen()
+
 
         -> open 'encoInfo -> secret_file' file in read mode
            * If ret value is NULL, print error, return e_failure
@@ -114,6 +142,36 @@ Status open_files(EncodeInfo *encInfo)
 
            return e_success
     */
+    encInfo->fptr_src_image = fopen(encInfo->src_image_fname,"r");
+
+    if(encInfo->fptr_src_image == NULL)
+    {
+        perror("fopen")
+        fprintf(stderr, "ERROR: Unable to open file %s\n",encInfo->src_image_fname);
+
+        return e_failure;
+    }
+
+    encInfo->fptr_secret = fopen(encInfo->secret_fname,"r");
+
+    if(encInfo->fptr_secret == NULL)
+    {
+        perror("fopen");
+        fprintf(stderr, "ERROR: Unable to open file %s\n",encInfo->secret_fname);
+
+        return e_failure;
+
+    }
+    encInfo->fptr_stego_image = fopen(encInfo->stego_image_fname,"w");
+
+    if(encInfo->fptr_stego_image == NULL)
+    {
+        perror("fopen");
+        fprintf(stderr, "ERROR: Unable to open file %s\n",encInfo->stego_image_fname);
+
+        return e_failure;
+    }
+    return e_success; 
 
 }
 
@@ -146,6 +204,28 @@ Status do_encoding(EncodeInfo *encInfo)
 
         return e_success
     */
+
+    if(encode_secret_file_extn(encInfo->extn_secret_file,encInfo) == e_failure)
+    {
+        printf("ERROR: Failed to encode secret file extension\n");
+        return e_failure;
+    }
+    if(encode_secret_file_size(encInfo->size_secret_file,encInfo)== e_failure)
+    {
+        printf("ERROR: Failed to encode secret file size\n");
+        return e_failure;
+    }
+    if(encode_secret_file_data(encInfo) == e_failure)
+    {
+        printf("ERROR: Failed to encode secret file data\n");
+        return e_failure;
+    }
+    if(copy_remaining_img_data(encInfo->fptr_src_image, encInfo->fptr_stego_image) == e_failure)
+    {
+        printf("ERROR: Failed to copy remaining image data\n");
+        return e_failure;
+    }
+    return e_success;
 }
 
 Status check_capacity(EncodeInfo *encInfo)
@@ -161,6 +241,15 @@ Status check_capacity(EncodeInfo *encInfo)
 
         -> return e_success
     */
+    encInfo->image_capacity = get_image_size_for_bmp(encInfo->src_image);
+
+    encInfo->size_secret_file = get_file_size(encInfo->fptr_secret);
+
+    if(((14 + encInfo->size_secret_file) * 8) > encInfo->image_capacity)
+    {
+        return e_failure;
+    }
+    return e_success;
 }
 
 uint get_file_size(FILE *fptr)
@@ -170,6 +259,9 @@ uint get_file_size(FILE *fptr)
     -> return ftell()
 
     */
+    fseek(fptr, 0, SEEK_END);
+
+    return ftell(fptr);
 }
 
 Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
@@ -182,6 +274,15 @@ Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
 
        -> return e_success
     */
+    char buff[54];
+
+    fseek(fptr_src_image, 0, SEEK_SET);
+    fseek(fptr_dest_image, 0, SEEK_SET);
+
+    fread(buff, 54, 1, fptr_src_image);
+    fwrite(buff, 54, 1, fptr_dest_image);
+
+    return e_success;
 }
 Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 {
@@ -194,9 +295,18 @@ Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
       write the encoded buff to output_file
 
       ->return e_success
-    
 
     */
+    char buff[8];
+    for(int i=0;magic_string[i] != '\0';i++)
+    {
+        fread(buff, 8, 1, encInfo->fptr_src_image);
+
+        encode_byte_to_lsb(magic_string[i], buff);
+
+        fwrite(buff, 8, 1, encInfo->fptr_stego_image);
+    }
+    return e_success;
 
 }
 Status encode_byte_to_lsb(char data, char *image_buffer)
