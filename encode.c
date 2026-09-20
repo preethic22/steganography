@@ -120,17 +120,31 @@ Status open_files(EncodeInfo *encInfo)
 Status do_encoding(EncodeInfo *encInfo)
 {
     /*
-         // Call check_capacity(encoInfo) == e_failure
+         // Call check_capacity(encInfo) == e_failure
             print error msg, return e_failure
 
         // Call copy_bmp_header(fptr_src_file,fptr_dest_file) == e_failure
             print error msg, return e_failure
 
-        // Call encode_magic_string(Magic_STRING, encoInfo) == e_failure
+        // Call encode_magic_string(Magic_STRING, encInfo) == e_failure
             print error msg, return e_failure
 
-        // Call encode_secret_file_extn_size(encoInfo) == e_failure
+        // Call encode_secret_file_extn_size(encInfo) == e_failure
             print error msg, return e_failure
+
+        // Call encode_secret_file_extn(extn_secret_file,encInfo) == e_failure
+            print error msg, return e_failure
+
+        // Call encode_secret_file_size(size_secret_file,encInfo) == e_failure
+            print error msg, return e_failure
+
+        // Call encode_secret_file_data(encInfo) == e_failure
+            print error msg, return e_failure
+
+        // Call copy_remaining_img_data(fptr_src_file,fptr_dest_file) == e_failure
+            print error msg, return e_failure
+
+        return e_success
     */
 }
 
@@ -194,7 +208,7 @@ Status encode_byte_to_lsb(char data, char *image_buffer)
                => if set, set the LSB of image_buffer[]
                => if clear, clear the LSB of image_buffer[]
 
-          }
+        }
     */
 
 }
@@ -207,11 +221,76 @@ Status encode_secret_file_extn_size(EncodeInfo *encoInfo)
 
         -> Read 32 bytes from src_file into buff
         -> Call  encode_size_to_lsb(strlen(extn_secret_file),buff)
+        -> Write 32 bytes of buff to output_file
+
+        return e_success;
+    */
+
+}
+Status encode_size_to_lsb(int size, char *Image_buff)
+{
+    /*
+       for(int i = 31;i >= 0;i--)
+        {
+            ->get the ith bit is or not
+               => if set, set the LSB of image_buffer[]
+               => if clear, clear the LSB of image_buffer[]
+
+        } 
+        
+        return e_success;
+
 
     */
 
 }
-Status encode_size_to_lsb(int size, char *Image_buff);
+Status encode_secret_file_extn(const char *file_extn, EncodeInfo *encInfo)
 {
+    /*
+        Declare buff[8]
+    => Loop for extention length
+        -> read 8 bytes from src_image
+        -> encode_byte_to_lsb(file_extn[],buff)
+        -> Write the 8 bytes of buff to output_file
 
+        return e_success
+
+    */
+
+}
+Status encode_secret_file_size(long file_size, EncodeInfo *encInfo);
+{
+    /*
+        -> Declare the buff[32] 
+
+        -> Read the 32 byte from src_image
+        -> Call encode_size_to_lsb(file_size,buff)
+        -> Write the 32 bytes of buff to output_file
+
+        return e_success
+    */
+}
+
+Status encode_secret_file_data(EncodeInfo *encInfo)
+{
+    /*
+        ->Declare buff[8]
+    => Loop till EOF of secret_file
+        -> Read 8 bytes from src_file
+        -> Read 1 byte from secret_file
+        -> encode_byte_to_lsb(data,buff)
+
+        return e_success
+    */
+}
+Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
+{
+    /*
+        -> Declare a char as data
+    => Loop till EOF of src_file
+        ->Read a char from src_file
+        -> Write the data o dest_file
+
+        return e_success
+    */
 }

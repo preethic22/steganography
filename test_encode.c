@@ -7,11 +7,12 @@ int main(int argc, )
     EncodeInfo encInfo;
     // -> call check_operation_type(argv[1][1]) == e_encode
     /*
-    //-> Call read_and_validate_encode_args(argv,&encInfo) == e_success
-    => Call do_encoding(&encoInfo)
+         -> Call read_and_validate_encode_args(argv,&encInfo) == e_success
+             => Call do_encoding(&encoInfo) == e_success
+                print "Encoding is success"
     */
 
-
+    
     return 0;
 }
 OperationType check_operation_type(char opt)
