@@ -6,6 +6,7 @@
 
 
 /* Decode one byte from 8 image bytes */
+/*decode*/
 Status decode_byte_from_lsb(char *image_buffer, char *data)
 {
     int i;
