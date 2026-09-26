@@ -2,6 +2,7 @@
 #include <string.h>
 #include "encode.h"
 #include "types.h"
+#include "common.h"
 
 /* Function Definitions */
 
@@ -169,26 +170,58 @@ Status do_encoding(EncodeInfo *encInfo)
         return e_success
     */
 
-    if(encode_secret_file_extn(encInfo->extn_secret_file,encInfo) == e_failure)
+    if(check_capacity(encInfo) == e_failure)
+    {
+        printf("ERROR: Failed to check capacity\n");
+        return e_failure;
+    }
+
+    if(copy_bmp_header(encInfo->fptr_src_image,
+                       encInfo->fptr_stego_image) == e_failure)
+    {
+        printf("ERROR: Failed to copy BMP header\n");
+        return e_failure;
+    }
+
+    if(encode_magic_string(MAGIC_STRING, encInfo) == e_failure)
+    {
+        printf("ERROR: Failed to encode magic string\n");
+        return e_failure;
+    }
+
+    if(encode_secret_file_extn_size(encInfo) == e_failure)
+    {
+        printf("ERROR: Failed to encode secret file extension size\n");
+        return e_failure;
+    }
+
+    if(encode_secret_file_extn(encInfo->extn_secret_file,
+                               encInfo) == e_failure)
     {
         printf("ERROR: Failed to encode secret file extension\n");
         return e_failure;
     }
-    if(encode_secret_file_size(encInfo->size_secret_file,encInfo)== e_failure)
+
+    if(encode_secret_file_size(encInfo->size_secret_file,
+                               encInfo) == e_failure)
     {
         printf("ERROR: Failed to encode secret file size\n");
         return e_failure;
     }
+
     if(encode_secret_file_data(encInfo) == e_failure)
     {
         printf("ERROR: Failed to encode secret file data\n");
         return e_failure;
     }
-    if(copy_remaining_img_data(encInfo->fptr_src_image, encInfo->fptr_stego_image) == e_failure)
+
+    if(copy_remaining_img_data(encInfo->fptr_src_image,
+                               encInfo->fptr_stego_image) == e_failure)
     {
         printf("ERROR: Failed to copy remaining image data\n");
         return e_failure;
     }
+
     return e_success;
 }
 
